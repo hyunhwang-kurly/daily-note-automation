@@ -73,5 +73,9 @@ echo "   node:   ${NODE_BIN}"
 echo "   script: ${ENTRY}"
 echo "   log:    ${LOG}"
 echo
-echo "지금 한 번 테스트 실행하려면:"
-echo "   launchctl kickstart -k ${DOMAIN}/${LABEL} && sleep 2 && cat \"${LOG}\""
+
+# 초기 1회 실행 — 이번 주 파일이 없으면 디렉터리/파일 생성.
+# (runner는 멱등: 파일이 이미 있으면 오늘 칸 이월만 하고 중복 생성하지 않음)
+echo "▶ 초기 실행 (이번 주 파일이 없으면 생성)..."
+"${NODE_BIN}" "${ENTRY}"
+echo "   로그 확인: cat \"${LOG}\""
