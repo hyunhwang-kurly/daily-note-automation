@@ -1,0 +1,14 @@
+{
+  "name": "daily-note-automation",
+  "version": "1.0.0",
+  "description": "Obsidian 주간 데일리 노트 자동 생성/이월 (07:00 launchd batch)",
+  "type": "module",
+  "bin": {
+    "daily-note": "bin/daily-note.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "start": "node bin/daily-note.js"
+  },
+  "license": "MIT"
+}
