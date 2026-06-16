@@ -259,12 +259,14 @@ Claude Code에서 한 작업을 **오늘 데일리 노트 Work 칸**(`🤖 Claud
   ```
 - **전역 스킬 `daily-log`** (지능형): 현재 세션 맥락을 Claude가 요약해 위 `log`를 호출. `"오늘 정리"`, `"작업 기록해줘"` 등으로 트리거.
 
-### 스킬 설치 (전역)
+### 스킬 설치 (전역) — 스크립트 한 줄
 ```bash
-mkdir -p ~/.claude/skills/daily-log
-cp claude/skills/daily-log/SKILL.md ~/.claude/skills/daily-log/SKILL.md
+npm run install-skill                # = bash claude/install.sh (스킬만 등록)
+bash claude/install.sh --with-hook   # 스킬 + SessionEnd 자동 트레이스 훅까지 등록
+bash claude/install.sh uninstall     # 스킬/훅 제거
 ```
-이후 Claude Code에서 `/daily-log` 또는 "오늘 작업 정리해줘"로 호출하면 됩니다.
+멱등(중복 등록 안 됨). 이후 Claude Code에서 `/daily-log` 또는 "오늘 작업 정리해줘"로 호출하면 됩니다.
+> `--with-hook`은 `~/.claude/settings.json`(에이전트 시작 설정)을 수정하므로 **본인이 직접 실행**하세요.
 
 ### 결과 예시
 ```markdown
