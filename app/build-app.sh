@@ -79,6 +79,12 @@ else
   cp "${LOCAL_NODE}" "${RES}/node/bin/node"
 fi
 chmod +x "${RES}/node/bin/node"
+# 디버그 심볼 제거로 용량 절감 (예: v25 127MB → 94MB). strip은 서명을 깨므로 즉시 ad-hoc 재서명.
+if strip "${RES}/node/bin/node" 2>/dev/null; then
+  codesign --remove-signature "${RES}/node/bin/node" 2>/dev/null || true
+  codesign --force --sign - "${RES}/node/bin/node" 2>/dev/null || true
+  echo "  strip + 재서명 완료 (용량 절감)"
+fi
 
 echo "▶ 앱 아이콘 적용"
 ICON_SRC="${ROOT}/app/icon.png"
