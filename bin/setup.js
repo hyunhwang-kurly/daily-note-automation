@@ -83,7 +83,25 @@ async function main() {
     installMsg = `매일 ${hhmm} 자동 실행을 등록했고, 이번 주 노트를 만들었습니다.`
   }
 
-  // 6) 완료 안내
+  // 7) 로그인 자동 실행 등록 (번들에서 실행된 경우에만 — RON.app 경로 추론 가능)
+  let loginMsg = ''
+  const idx = process.execPath.indexOf('/Contents/Resources/')
+  if (idx >= 0) {
+    const ronBin = `${process.execPath.slice(0, idx)}/Contents/MacOS/RON`
+    if (fs.existsSync(ronBin)) {
+      const wantLogin = await confirm({
+        message: '로그인할 때 RON을 자동으로 켜고 메뉴바에 둘까요?',
+        yes: '등록',
+        no: '나중에',
+      })
+      if (wantLogin) {
+        await run('/bin/bash', [path.join(PROJECT_DIR, 'launchd', 'install-login.sh')], { RON_BIN: ronBin })
+        loginMsg = '\n• 로그인 시 메뉴바 자동 실행 등록됨'
+      }
+    }
+  }
+
+  // 8) 완료 안내
   await notify({
     message: [
       '설정이 완료되었습니다 🎉',
@@ -91,7 +109,7 @@ async function main() {
       `• 노트 폴더: ${vaultRoot}`,
       `• 볼트: ${vaultName}`,
       `• 메일: ${email.enabled ? email.to : '사용 안 함'}`,
-      `• ${installMsg}`,
+      `• ${installMsg}${loginMsg}`,
       '',
       `설정 파일: ${savedPath}`,
     ].join('\n'),
