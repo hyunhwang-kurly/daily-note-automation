@@ -51,7 +51,7 @@ button returned of r`
 }
 
 // 안내 알림
-export async function notify({ message, title = '데일리 노트' } = {}) {
+export async function notify({ message, title = 'RON' } = {}) {
   return runOsa(
     `display dialog ${osaQuote(message)} with title ${osaQuote(title)} buttons {"확인"} default button "확인"`,
   )

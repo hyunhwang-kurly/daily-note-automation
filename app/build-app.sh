@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# DailyNote.app + DailyNote.dmg 빌드 (미서명).
+# RON.app + RON.dmg 빌드 (미서명).
 #
 # 사용법:
 #   bash app/build-app.sh                 # 로컬 node 복사(빠름, 같은 arch 배포)
 #   bash app/build-app.sh --download      # nodejs.org에서 arch에 맞는 node 내려받아 번들
 #
-# 산출물: dist/DailyNote.app, dist/DailyNote.dmg  (git 추적 안 함)
+# 산출물: dist/RON.app, dist/RON.dmg  (git 추적 안 함)
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST="${ROOT}/dist"
-APP="${DIST}/DailyNote.app"
+APP="${DIST}/RON.app"
 RES="${APP}/Contents/Resources"
 NODE_VER="v22.11.0"
-BUNDLE_ID="com.hyun.dailynote"
+BUNDLE_ID="com.hyun.ron"
 
 MODE="${1:-local}"
 
@@ -56,9 +56,9 @@ chmod +x "${RES}/node/bin/node"
 
 echo "▶ Info.plist 메타데이터 설정"
 PLIST="${APP}/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleName DailyNote" "${PLIST}" 2>/dev/null || true
-/usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string '데일리 노트'" "${PLIST}" 2>/dev/null \
-  || /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName 데일리 노트" "${PLIST}"
+/usr/libexec/PlistBuddy -c "Set :CFBundleName RON" "${PLIST}" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string RON" "${PLIST}" 2>/dev/null \
+  || /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName RON" "${PLIST}"
 /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier ${BUNDLE_ID}" "${PLIST}" 2>/dev/null \
   || /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string ${BUNDLE_ID}" "${PLIST}"
 
@@ -85,12 +85,12 @@ echo "▶ ad-hoc 코드서명 (Gatekeeper 경고 완화, 무인증서)"
 codesign --force --deep --sign - "${APP}" 2>/dev/null || echo "  (codesign 생략)"
 
 echo "▶ DMG 생성"
-hdiutil create -volname "DailyNote" -srcfolder "${APP}" -ov -format UDZO "${DIST}/DailyNote.dmg" >/dev/null
+hdiutil create -volname "RON" -srcfolder "${APP}" -ov -format UDZO "${DIST}/RON.dmg" >/dev/null
 
 echo ""
 echo "✅ 빌드 완료"
 echo "   app: ${APP}"
-echo "   dmg: ${DIST}/DailyNote.dmg"
+echo "   dmg: ${DIST}/RON.dmg"
 echo ""
-echo "배포 안내: 받은 사람은 .dmg 열고 DailyNote.app 을 Applications로 끌어다 놓은 뒤,"
+echo "배포 안내: 받은 사람은 .dmg 열고 RON.app 을 Applications로 끌어다 놓은 뒤,"
 echo "첫 실행만 '우클릭 → 열기 → 열기'로 Gatekeeper 경고를 1회 허용하면 됩니다."

@@ -24,7 +24,7 @@ test('findObsidianRoot: 없으면 null', () => {
 test('configPath: Application Support 경로', () => {
   assert.equal(
     configPath('/Users/me'),
-    '/Users/me/Library/Application Support/DailyNote/config.json',
+    '/Users/me/Library/Application Support/RON/config.json',
   )
 })
 

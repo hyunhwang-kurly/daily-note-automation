@@ -3,9 +3,9 @@
 import os from 'node:os'
 import path from 'node:path'
 
-// 설정 파일 위치 (~/Library/Application Support/DailyNote/config.json)
+// 설정 파일 위치 (~/Library/Application Support/RON/config.json)
 export function configDir(home = os.homedir()) {
-  return path.join(home, 'Library', 'Application Support', 'DailyNote')
+  return path.join(home, 'Library', 'Application Support', 'RON')
 }
 
 export function configPath(home = os.homedir()) {
