@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { vaultNameFromRoot, findObsidianRoot, configPath, defaultVaultCandidates } from '../src/paths.js'
-import { buildConfig, parseTime } from '../src/config-store.js'
+import { buildConfig, parseTime, parseRoutines } from '../src/config-store.js'
 
 test('vaultNameFromRoot: 볼트 루트의 basename', () => {
   assert.equal(vaultNameFromRoot('/Users/me/.../Documents/xtring'), 'xtring')
@@ -55,6 +55,20 @@ test('buildConfig: schedule 기본값 07:00, 지정 시 반영', () => {
     buildConfig({ vaultRoot: '/v', vaultName: 'x', schedule: { hour: 9, minute: 30 } }).schedule,
     { hour: 9, minute: 30 },
   )
+})
+
+test('buildConfig: personalRoutines 기본/지정', () => {
+  assert.deepEqual(buildConfig({ vaultRoot: '/v', vaultName: 'x' }).personalRoutines, ['운동', '독서'])
+  assert.deepEqual(
+    buildConfig({ vaultRoot: '/v', vaultName: 'x', personalRoutines: ['러닝'] }).personalRoutines,
+    ['러닝'],
+  )
+})
+
+test('parseRoutines: 쉼표 구분 파싱/정리', () => {
+  assert.deepEqual(parseRoutines('운동, 독서'), ['운동', '독서'])
+  assert.deepEqual(parseRoutines(' 러닝 ,, 명상 , '), ['러닝', '명상'])
+  assert.deepEqual(parseRoutines(''), [])
 })
 
 test('parseTime: HH:MM 파싱/검증', () => {

@@ -50,6 +50,20 @@ button returned of r`
   return out === yes
 }
 
+// 목록에서 하나 선택 → 선택 항목 문자열. 취소 시 throw('CANCELLED')
+export async function chooseFromList({ prompt, items = [] } = {}) {
+  const list = items.map(osaQuote).join(', ')
+  const script = `set r to choose from list {${list}} with prompt ${osaQuote(
+    prompt,
+  )} OK button name "선택" cancel button name "닫기"
+if r is false then
+\terror "CANCELLED" number -128
+else
+\treturn item 1 of r
+end if`
+  return runOsa(script)
+}
+
 // 안내 알림
 export async function notify({ message, title = 'RON' } = {}) {
   return runOsa(

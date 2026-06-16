@@ -4,10 +4,14 @@ import fs from 'node:fs'
 import { configDir, configPath } from './paths.js'
 
 // 사용자 입력(answers) → 저장할 설정 객체 (순수)
-export function buildConfig({ vaultRoot, vaultName, email, schedule } = {}) {
+export function buildConfig({ vaultRoot, vaultName, email, schedule, personalRoutines } = {}) {
   return {
     vaultRoot,
     obsidian: { vaultName },
+    personalRoutines:
+      Array.isArray(personalRoutines) && personalRoutines.length
+        ? personalRoutines
+        : ['운동', '독서'],
     email: {
       enabled: Boolean(email?.enabled),
       to: email?.to ?? '',
@@ -18,6 +22,14 @@ export function buildConfig({ vaultRoot, vaultName, email, schedule } = {}) {
       minute: Number.isInteger(schedule?.minute) ? schedule.minute : 0,
     },
   }
+}
+
+// "운동, 독서" → ["운동","독서"] (공백/빈 항목 정리)
+export function parseRoutines(s) {
+  return String(s ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
 }
 
 // "HH:MM" → {hour, minute} (검증). 실패 시 null.

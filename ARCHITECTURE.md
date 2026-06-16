@@ -220,7 +220,9 @@ cd ~/Work/daily-note-automation && node bin/daily-note.js
 
 ## 8. 설정
 
-`src/config.js` 또는 환경변수로 조정합니다.
+비개발자는 **메뉴바 ⚡ → 설정 열기**에서 항목별로 골라 바로 변경할 수 있습니다(노트 폴더·볼트명·Personal 루틴·실행 시각·메일). 설정이 없으면 첫 실행 마법사가, 있으면 항목 선택 편집 메뉴(`choose from list`)가 뜹니다. 변경값은 `~/Library/Application Support/RON/config.json`에 저장되고, 실행 시각 변경 시 launchd가 자동 재등록됩니다.
+
+개발자는 환경변수 또는 `config.json`으로 조정합니다.
 
 | 항목 | 기본값 | 환경변수 |
 | :--- | :--- | :--- |
