@@ -65,17 +65,28 @@ PLIST="${APP}/Contents/Info.plist"
 echo "▶ 앱 아이콘 적용"
 ICON_SRC="${ROOT}/app/icon.png"
 if [[ -f "${ICON_SRC}" ]]; then
+  # swift 가 있으면 macOS 규격(둥근 사각형+투명 여백+그림자)으로 shaping 후 사용
+  SHAPED="${ICON_SRC}"
+  if command -v swift >/dev/null 2>&1; then
+    SHAPED="${DIST}/icon-shaped.png"
+    if swift "${ROOT}/app/make-icon.swift" "${ICON_SRC}" "${SHAPED}" >/dev/null 2>&1; then
+      echo "  macOS 규격 shaping 적용 (둥근 사각형+투명 여백)"
+    else
+      SHAPED="${ICON_SRC}"
+      echo "  shaping 실패 → 원본 사용"
+    fi
+  fi
   ICONSET="${DIST}/AppIcon.iconset"
   mkdir -p "${ICONSET}"
-  # 표준 아이콘 세트 생성 (16~512 + @2x). 원본은 1024x1024 PNG 권장.
+  # 표준 아이콘 세트 생성 (16~512 + @2x)
   for size in 16 32 128 256 512; do
-    sips -z "${size}" "${size}" "${ICON_SRC}" --out "${ICONSET}/icon_${size}x${size}.png" >/dev/null
+    sips -z "${size}" "${size}" "${SHAPED}" --out "${ICONSET}/icon_${size}x${size}.png" >/dev/null
     d2=$((size * 2))
-    sips -z "${d2}" "${d2}" "${ICON_SRC}" --out "${ICONSET}/icon_${size}x${size}@2x.png" >/dev/null
+    sips -z "${d2}" "${d2}" "${SHAPED}" --out "${ICONSET}/icon_${size}x${size}@2x.png" >/dev/null
   done
   # osacompile이 만든 applet.icns 를 교체 (Info.plist의 CFBundleIconFile=applet 그대로 사용)
   iconutil -c icns "${ICONSET}" -o "${RES}/applet.icns"
-  rm -rf "${ICONSET}"
+  rm -rf "${ICONSET}" "${DIST}/icon-shaped.png"
   echo "  적용됨: app/icon.png → applet.icns"
 else
   echo "  app/icon.png 없음 → 기본 아이콘 사용 (1024x1024 PNG를 app/icon.png 로 두면 자동 적용)"
