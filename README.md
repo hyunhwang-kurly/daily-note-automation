@@ -12,7 +12,43 @@
 ![tests](https://img.shields.io/badge/tests-41%20passing-brightgreen.svg)
 ![deps](https://img.shields.io/badge/dependencies-zero-success.svg)
 
+### [⬇️ RON.dmg 다운로드 (최신 릴리스)](https://github.com/hyunhwang-kurly/daily-note-automation/releases/latest/download/RON.dmg)
+
 </div>
+
+---
+
+## ⬇️ 다운로드 & 설치 (비개발자용)
+
+코드·터미널 없이 **3단계**면 끝납니다. (macOS Apple Silicon)
+
+### 1. 다운로드
+**[⬇️ RON.dmg 받기](https://github.com/hyunhwang-kurly/daily-note-automation/releases/latest/download/RON.dmg)** — 또는 [Releases 페이지](https://github.com/hyunhwang-kurly/daily-note-automation/releases/latest)에서 받기
+
+### 2. 설치
+1. 받은 `RON.dmg` 를 **더블클릭**해서 엽니다
+2. 창에 나온 **`RON.app` 을 `응용 프로그램` 폴더로 드래그**합니다
+3. `응용 프로그램`에서 RON을 **마우스 우클릭 → 열기 → (경고창에서) 열기** 한 번만 합니다
+   > 미서명 앱이라 더블클릭하면 "확인되지 않은 개발자" 경고가 뜹니다. **첫 실행만 우클릭→열기**로 허용하면 이후엔 그냥 켜집니다.
+
+### 3. 사용
+1. 처음 켜면 **설정 마법사**가 뜹니다:
+   - **노트 폴더 선택** (Obsidian 볼트 안의 데일리 노트 폴더)
+   - **실행 시각** 입력 (기본 `07:00`)
+   - (선택) **요약 메일** 받을 주소
+   - **자동 실행 등록** → 이번 주 노트가 바로 생성됩니다
+   - (선택) **로그인 시 자동 실행**
+2. 끝! 상단 메뉴바에 **⚡ 아이콘**이 상주합니다. 클릭하면:
+   - **오늘 노트 열기** · **설정 열기** · **RON 종료**
+3. 매일 설정한 시각에 이번 주 노트가 자동으로 만들어지고, 어제 못 끝낸 할일이 오늘로 넘어옵니다.
+
+### 꼭 필요한 것 / 선택
+| | 항목 | 비고 |
+| :-- | :-- | :-- |
+| ✅ 필수 | macOS (Apple Silicon) | Intel 맥은 [소스 빌드](#%EF%B8%8F-빌드-appdmg)의 `--download` 사용 |
+| ❌ 불필요 | **Node.js 설치** | **앱에 포함**되어 있어 따로 설치할 필요 없음 |
+| 🔲 선택 | Obsidian | "오늘 노트 열기" 버튼으로 앱에서 바로 열 때 |
+| 🔲 선택 | Mail.app (설정·온라인) | 요약 메일 기능을 켠 경우에만 |
 
 ---
 
