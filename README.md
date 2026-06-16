@@ -152,10 +152,10 @@ sleep 2 && cat ~/Library/Logs/daily-note.log
 
 ### 수동 실행
 ```bash
-node bin/daily-note.js                 # 오늘 날짜로 실행
+node bin/daily-note.js                 # 오늘 날짜로 실행 (+메일 발송)
 node bin/daily-note.js --date 2026-06-16   # 특정 날짜로 실행
+node bin/daily-note.js --no-mail       # 메일 발송 생략 (파일만)
 node bin/daily-note.js --dry           # 실제 쓰기 없이 대상 파일 경로만 출력
-node bin/daily-note.js --date 2026-06-16 --dry
 ```
 
 ### 테스트
@@ -165,7 +165,31 @@ node --test        # 또는 npm test
 
 ---
 
-## 7. 설정
+## 7. 메일 발송 (오늘 칸 + 이월 요약)
+
+launchd 실행 시 **오늘 칸 전체 + 이월 요약**을 HTML 메일로 발송합니다.
+
+- **전송 수단**: macOS **Mail.app** (`osascript`). 자격증명/SMTP 설정 불필요, 기본 계정으로 발송.
+- **내용**: 주차·요일 헤더, 이월 항목 목록(없으면 "오늘 이월 없음"), 오늘 칸(체크박스 렌더), **`데일리 노트 확인하기` 버튼**(Obsidian 딥링크).
+- **빈 날에도 항상 발송** (변경 없으면 "오늘 이월 없음"으로).
+- 메일 발송이 실패해도 **노트 파일 생성은 정상 완료**됩니다 (메일은 best-effort).
+
+### 최초 1회: 자동화 권한 허용 (필수)
+Mail.app 제어 권한을 처음 한 번 허용해야 합니다. 터미널에서 직접 실행해 팝업의 **허용**을 누르세요.
+```bash
+cd ~/Work/daily-note-automation && node bin/daily-note.js
+# → "osascript이(가) Mail을 제어하려고 합니다" 팝업 → [허용]
+```
+한 번 허용하면 이후 launchd 헤드리스 실행도 발송됩니다. (`-1712 AppleEvent timed out` 오류는 이 권한 미허용이 원인)
+
+### Obsidian 딥링크 버튼
+`obsidian://open?vault=<볼트>&file=<상대경로>` 형식. 클릭 시 모바일/PC Obsidian 앱에서 해당 노트가 열립니다.
+
+> ⚠️ **Gmail 웹**은 `obsidian://` 같은 커스텀 스킴 링크를 제거할 수 있습니다. 이 경우 버튼이 안 눌리므로, 버튼 아래 **복사용 링크**를 함께 제공합니다. (Apple Mail·일부 모바일 클라이언트는 버튼 정상 동작)
+
+---
+
+## 8. 설정
 
 `src/config.js` 또는 환경변수로 조정합니다.
 
@@ -174,8 +198,14 @@ node --test        # 또는 npm test
 | 볼트 루트 | `…/🏃🏻 데일리 노트` | `DAILY_NOTE_VAULT` |
 | Personal 루틴 | `운동`, `독서` | (코드 수정) |
 | 들여쓰기 | 탭(`\t`) | (코드 수정) |
+| 메일 수신자 | `hh940630@gmail.com` | `DAILY_NOTE_EMAIL_TO` |
+| 메일 발송 on/off | `on` | `DAILY_NOTE_EMAIL=off` |
+| Obsidian 볼트명 | `xtring` | `DAILY_NOTE_OBSIDIAN_VAULT` |
 
 ```bash
-# 임시로 다른 경로에 실행 (테스트용)
-DAILY_NOTE_VAULT=/tmp/vault-test node bin/daily-note.js --date 2026-06-16
+# 임시 경로 + 메일 끄고 테스트
+DAILY_NOTE_VAULT=/tmp/vault-test node bin/daily-note.js --date 2026-06-16 --no-mail
+
+# 다른 주소로 발송 테스트
+DAILY_NOTE_EMAIL_TO=other@example.com node bin/daily-note.js
 ```

@@ -13,4 +13,14 @@ export const config = Object.freeze({
   personalRoutines: Object.freeze(['운동', '독서']),
   // 들여쓰기 문자 (실제 파일은 탭 사용)
   indent: '\t',
+  // 메일 발송 설정 (launchd 실행 시 오늘 칸 + 이월 요약을 메일로)
+  email: Object.freeze({
+    // DAILY_NOTE_EMAIL=off 면 발송 비활성화
+    enabled: (process.env.DAILY_NOTE_EMAIL ?? 'on').toLowerCase() !== 'off',
+    to: process.env.DAILY_NOTE_EMAIL_TO ?? 'hh940630@gmail.com',
+  }),
+  // Obsidian 딥링크용 볼트명 (obsidian://open?vault=...)
+  obsidian: Object.freeze({
+    vaultName: process.env.DAILY_NOTE_OBSIDIAN_VAULT ?? 'xtring',
+  }),
 })

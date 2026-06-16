@@ -8,6 +8,7 @@ import {
   prevWeekDate,
   weekDates,
   dayName,
+  monthDay,
   dateKey,
 } from './week.js'
 import {
@@ -102,16 +103,37 @@ function injectCarry(bodyLines, carriedLines, marker) {
   ]
 }
 
+// 요일 섹션을 텍스트로 (후행 빈 줄/마커 제거)
+function sectionToText(section) {
+  const body = section.bodyLines
+    .filter((l) => !l.includes('<!-- carried:'))
+    .join('\n')
+    .replace(/\n+$/, '')
+  return `${section.raw}\n${body}`
+}
+
+// 오늘 칸 Work에 현재 들어있는 이월(↪) 항목 텍스트들
+function carriedItemsIn(section) {
+  return unfinishedWorkItems(section.bodyLines).filter((t) => t.startsWith('↪'))
+}
+
 /**
  * 메인 진입. 결과 요약 객체 반환.
  * @param {{today?: Date, vaultRoot?: string, io?: object}} options
  */
 export async function run({ today = new Date(), vaultRoot = config.vaultRoot, io = realIo } = {}) {
-  const summary = { created: false, carried: 0, skipped: false, path: '' }
-
   const cur = notePath(today, vaultRoot)
   const prev = notePath(prevWeekDate(today), vaultRoot)
-  summary.path = cur.fullPath
+  const summary = {
+    created: false,
+    carried: 0,
+    skipped: false,
+    path: cur.fullPath,
+    weekLabel: `${cur.year}년 ${cur.month}월 ${cur.week}주차`,
+    dayLabel: `${dayName(today)}(${monthDay(today)})`,
+    todaySectionText: '',
+    carriedItems: [],
+  }
 
   // 지난주 파일 파싱 (있으면)
   let prevSections = []
@@ -120,7 +142,6 @@ export async function run({ today = new Date(), vaultRoot = config.vaultRoot, io
   }
 
   const dayKey = dayName(today)
-  const isMonday = dayKey === '월'
 
   // 1) 이번 주 파일이 없으면 생성
   if (!(await io.exists(cur.fullPath))) {
@@ -137,10 +158,6 @@ export async function run({ today = new Date(), vaultRoot = config.vaultRoot, io
     })
     await io.write(cur.fullPath, content)
     summary.created = true
-    if (isMonday) {
-      summary.carried = mondayCarry.length
-      return summary // 월요일은 생성 시 이미 처리됨
-    }
   }
 
   // 2) 오늘 칸 이월 (멱등)
@@ -152,23 +169,27 @@ export async function run({ today = new Date(), vaultRoot = config.vaultRoot, io
   }
 
   const marker = markerFor(today)
-  if (todaySection.bodyLines.some((l) => l.includes(marker))) {
-    summary.skipped = true // 이미 오늘 이월 완료
-    return summary
+  const alreadyDone = todaySection.bodyLines.some((l) => l.includes(marker))
+
+  if (!alreadyDone) {
+    const source = findCarrySource(today, parsed.sections, prevSections)
+    // 오늘 Work에 이미 있는 base와 중복 제거
+    const existingBases = new Set(
+      unfinishedWorkItems(todaySection.bodyLines).map((t) => parseCarry(t).base),
+    )
+    const carriedLines = source
+      .filter((t) => !existingBases.has(parseCarry(t).base))
+      .map((t) => `${config.indent}- [ ] ${bumpCarry(t)}`)
+
+    todaySection.bodyLines = injectCarry(todaySection.bodyLines, carriedLines, marker)
+    await io.write(cur.fullPath, serializeSections(parsed.preamble, parsed.sections))
+    summary.carried = carriedLines.length
+  } else {
+    summary.skipped = true
   }
 
-  const source = findCarrySource(today, parsed.sections, prevSections)
-  // 오늘 Work에 이미 있는 base와 중복 제거
-  const existingBases = new Set(
-    unfinishedWorkItems(todaySection.bodyLines).map((t) => parseCarry(t).base),
-  )
-  const carriedLines = source
-    .filter((t) => !existingBases.has(parseCarry(t).base))
-    .map((t) => `${config.indent}- [ ] ${bumpCarry(t)}`)
-
-  todaySection.bodyLines = injectCarry(todaySection.bodyLines, carriedLines, marker)
-  await io.write(cur.fullPath, serializeSections(parsed.preamble, parsed.sections))
-
-  summary.carried = carriedLines.length
+  // 3) 메일 요약용: 오늘 칸 텍스트 + 현재 이월 항목 (skip 여부와 무관하게 항상 채움)
+  summary.todaySectionText = sectionToText(todaySection)
+  summary.carriedItems = carriedItemsIn(todaySection)
   return summary
 }
