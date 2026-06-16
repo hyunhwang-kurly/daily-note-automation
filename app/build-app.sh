@@ -2,9 +2,11 @@
 # RON.app (Swift 메뉴바 앱) + RON.dmg 빌드 (미서명).
 #
 # 사용법:
-#   bash app/build-app.sh                 # 로컬 node 복사(빠름, 같은 arch 배포)
-#   bash app/build-app.sh --download      # nodejs.org에서 arch에 맞는 node 내려받아 번들
+#   bash app/build-app.sh                          # PATH의 node 복사(빠름)
+#   NODE_SRC=~/.nvm/versions/node/v20.18.1/bin/node bash app/build-app.sh  # 작은 LTS 번들(용량↓)
+#   bash app/build-app.sh --download               # nodejs.org에서 NODE_VER 내려받아 번들
 #
+# 용량: node 바이너리가 대부분(v25~127MB, v20~91MB). strip+압축으로 dmg ~31MB.
 # 산출물: dist/RON.app, dist/RON.dmg  (git 추적 안 함)
 
 set -euo pipefail
@@ -15,7 +17,7 @@ APP="${DIST}/RON.app"
 CONTENTS="${APP}/Contents"
 MACOS="${CONTENTS}/MacOS"
 RES="${CONTENTS}/Resources"
-NODE_VER="v22.11.0"
+NODE_VER="v20.18.1"   # 용량 최적화: node 20 LTS (--download 시). 로컬은 NODE_SRC로 지정 가능
 BUNDLE_ID="com.hyun.ron"
 
 MODE="${1:-local}"
@@ -70,9 +72,10 @@ if [[ "${MODE}" == "--download" ]]; then
   cp "${DIST}/${TARBALL}/bin/node" "${RES}/node/bin/node"
   rm -rf "${DIST}/node.tgz" "${DIST}/${TARBALL}"
 else
-  LOCAL_NODE="$(command -v node || true)"
-  if [[ -z "${LOCAL_NODE}" ]]; then
-    echo "로컬 node 를 찾을 수 없습니다. --download 로 다시 실행하세요." >&2
+  # NODE_SRC 로 특정 node 지정 가능 (미지정 시 PATH의 node). 용량 위해 LTS 권장.
+  LOCAL_NODE="${NODE_SRC:-$(command -v node || true)}"
+  if [[ -z "${LOCAL_NODE}" || ! -x "${LOCAL_NODE}" ]]; then
+    echo "node 를 찾을 수 없습니다. NODE_SRC 지정 또는 --download 로 실행하세요." >&2
     exit 1
   fi
   echo "  로컬 node 복사: ${LOCAL_NODE} (arch=${NARCH})"
@@ -112,8 +115,10 @@ fi
 echo "▶ ad-hoc 코드서명"
 codesign --force --deep --sign - "${APP}" 2>/dev/null || echo "  (codesign 생략)"
 
-echo "▶ DMG 생성"
+echo "▶ DMG 생성 (UDZO 압축)"
 hdiutil create -volname "RON" -srcfolder "${APP}" -ov -format UDZO "${DIST}/RON.dmg" >/dev/null
+# 생성 중 마운트된 볼륨 정리 (누수 방지)
+for v in /Volumes/RON /Volumes/RON\ *; do [ -d "$v" ] && hdiutil detach "$v" -force >/dev/null 2>&1 || true; done
 
 echo ""
 echo "✅ 빌드 완료"
