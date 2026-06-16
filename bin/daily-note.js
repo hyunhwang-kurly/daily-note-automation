@@ -49,6 +49,7 @@ async function main() {
       try {
         const subject = await sendDailyEmail(result, {
           to: config.email.to,
+          from: config.email.from,
           vaultName: config.obsidian.vaultName,
         })
         log(`메일 발송 완료 → ${config.email.to} | ${subject}`)

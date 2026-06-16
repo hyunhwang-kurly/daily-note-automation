@@ -119,21 +119,25 @@ export function buildEmail(summary, { vaultName } = {}) {
 }
 
 // Mail.app으로 발송. 성공 시 true. 실패는 throw.
-export function sendViaMailApp({ to, subject, text, html, scriptPath = SCRIPT_PATH }) {
+export function sendViaMailApp({ to, from, subject, text, html, scriptPath = SCRIPT_PATH }) {
   return new Promise((resolve, reject) => {
-    execFile('/usr/bin/osascript', [scriptPath, subject, to, text, html], (error, _stdout, stderr) => {
-      if (error) {
-        reject(new Error(`Mail.app 발송 실패: ${stderr || error.message}`))
-        return
-      }
-      resolve(true)
-    })
+    execFile(
+      '/usr/bin/osascript',
+      [scriptPath, subject, to, text, html, from ?? to],
+      (error, _stdout, stderr) => {
+        if (error) {
+          reject(new Error(`Mail.app 발송 실패: ${stderr || error.message}`))
+          return
+        }
+        resolve(true)
+      },
+    )
   })
 }
 
 // summary 기반으로 메일 발송 (고수준 진입점)
-export async function sendDailyEmail(summary, { to, vaultName }) {
+export async function sendDailyEmail(summary, { to, from, vaultName }) {
   const { subject, text, html } = buildEmail(summary, { vaultName })
-  await sendViaMailApp({ to, subject, text, html })
+  await sendViaMailApp({ to, from, subject, text, html })
   return subject
 }

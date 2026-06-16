@@ -18,6 +18,8 @@ export const config = Object.freeze({
     // DAILY_NOTE_EMAIL=off 면 발송 비활성화
     enabled: (process.env.DAILY_NOTE_EMAIL ?? 'on').toLowerCase() !== 'off',
     to: process.env.DAILY_NOTE_EMAIL_TO ?? 'hh940630@gmail.com',
+    // 발신 계정 (Mail.app에 등록된 계정 이메일). 미지정 시 Outbox에 멈출 수 있음.
+    from: process.env.DAILY_NOTE_EMAIL_FROM ?? 'hh940630@gmail.com',
   }),
   // Obsidian 딥링크용 볼트명 (obsidian://open?vault=...)
   obsidian: Object.freeze({
