@@ -21,6 +21,7 @@ import {
   parseCarry,
 } from './markdown.js'
 import { buildWeeklyNote } from './template.js'
+import { insertWorkLog } from './worklog.js'
 
 export const realIo = {
   async exists(p) {
@@ -192,4 +193,29 @@ export async function run({ today = new Date(), vaultRoot = config.vaultRoot, io
   summary.todaySectionText = sectionToText(todaySection)
   summary.carriedItems = carriedItemsIn(todaySection)
   return summary
+}
+
+/**
+ * 오늘 Work 칸 하위 `🤖 Claude Code` 그룹에 작업 로그를 추가.
+ * 파일/오늘 섹션이 없으면 생성. 메일/이월은 건드리지 않음.
+ * @param {{today?: Date, timeLabel: string, detailLines: string[], vaultRoot?: string, io?: object}} o
+ */
+export async function appendDailyLog({
+  today = new Date(),
+  timeLabel,
+  detailLines,
+  vaultRoot = config.vaultRoot,
+  io = realIo,
+}) {
+  const cur = notePath(today, vaultRoot)
+  if (!(await io.exists(cur.fullPath))) {
+    await io.write(cur.fullPath, buildWeeklyNote(today))
+  }
+  const parsed = parseSections(await io.read(cur.fullPath))
+  const todaySection = findDaySectionByName(parsed.sections, dayName(today))
+  if (!todaySection) throw new Error('오늘 요일 섹션을 찾을 수 없습니다')
+
+  todaySection.bodyLines = insertWorkLog(todaySection.bodyLines, timeLabel, detailLines)
+  await io.write(cur.fullPath, serializeSections(parsed.preamble, parsed.sections))
+  return { path: cur.fullPath, count: detailLines.filter((l) => l.trim()).length }
 }

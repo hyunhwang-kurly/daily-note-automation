@@ -244,3 +244,35 @@ bash app/build-app.sh --download   # nodejs.org에서 arch에 맞는 node 내려
 - **arch**: 로컬 복사 빌드는 빌드한 맥의 arch 전용(arm64/x64). 폭넓게 배포하려면 `--download` 로 arch별 빌드.
 - **메일은 선택**: 마법사에서 켠 사람만 활성. Mail.app이 설정·온라인이어야 발송됩니다.
 - launchd 작업은 **앱 번들 내부의 node/스크립트**를 가리키므로, 설치 후 앱을 옮기거나 삭제하면 마법사를 다시 실행하세요.
+
+---
+
+## 10. Claude Code 작업 로그 (`log` + 스킬)
+
+Claude Code에서 한 작업을 **오늘 데일리 노트 Work 칸**(`🤖 Claude Code` 그룹)에 지능형 요약으로 기록합니다.
+
+### 역할 분리
+- **CLI `log`** (결정론적): 주어진 마크다운 불릿을 오늘 Work 칸 하위 `🤖 Claude Code`에 타임스탬프와 함께 append. 파일 없으면 생성, 메일은 안 보냄.
+  ```bash
+  node bin/daily-note.js log "불릿1" "불릿2"     # 인자당 한 줄
+  printf '%s\n' "줄1" "줄2" | node bin/daily-note.js log   # stdin
+  ```
+- **전역 스킬 `daily-log`** (지능형): 현재 세션 맥락을 Claude가 요약해 위 `log`를 호출. `"오늘 정리"`, `"작업 기록해줘"` 등으로 트리거.
+
+### 스킬 설치 (전역)
+```bash
+mkdir -p ~/.claude/skills/daily-log
+cp claude/skills/daily-log/SKILL.md ~/.claude/skills/daily-log/SKILL.md
+```
+이후 Claude Code에서 `/daily-log` 또는 "오늘 작업 정리해줘"로 호출하면 됩니다.
+
+### 결과 예시
+```markdown
+- Work
+	- 🤖 Claude Code
+		- 14:30
+			- daily-note에 log 명령 추가
+			- worklog.js 순수함수 + 테스트
+		- 17:05
+			- 버그 수정 1건, PR #12 생성
+```

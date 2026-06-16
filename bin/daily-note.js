@@ -2,9 +2,48 @@
 // CLI 진입점. launchd가 매일 07:00 실행.
 // 사용: node bin/daily-note.js [--date YYYY-MM-DD] [--dry] [--no-mail]
 
-import { run } from '../src/runner.js'
+import { run, appendDailyLog } from '../src/runner.js'
 import { config } from '../src/config.js'
 import { sendDailyEmail } from '../src/email.js'
+
+function readStdin() {
+  return new Promise((resolve) => {
+    let data = ''
+    if (process.stdin.isTTY) {
+      resolve('')
+      return
+    }
+    process.stdin.setEncoding('utf8')
+    process.stdin.on('data', (c) => {
+      data += c
+    })
+    process.stdin.on('end', () => resolve(data))
+  })
+}
+
+function hhmm(d) {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+// `daily-note log "줄1" "줄2" ...` 또는 stdin(줄바꿈 구분)으로 오늘 Work에 작업 로그 추가
+async function runLog(restArgs) {
+  const now = new Date()
+  let lines = restArgs.filter((a) => a !== undefined)
+  if (lines.length === 0) {
+    const stdin = await readStdin()
+    lines = stdin.split('\n')
+  }
+  lines = lines.map((s) => s.trim()).filter(Boolean)
+  if (lines.length === 0) {
+    process.stderr.write('[daily-note] log: 기록할 내용이 없습니다 (인자 또는 stdin 필요)\n')
+    process.exitCode = 1
+    return
+  }
+  const result = await appendDailyLog({ today: now, timeLabel: hhmm(now), detailLines: lines })
+  process.stdout.write(
+    `[daily-note] ${now.toISOString()} 작업 로그 ${result.count}건 기록 → ${result.path}\n`,
+  )
+}
 
 function parseArgs(argv) {
   const args = { date: undefined, dry: false, noMail: false }
@@ -29,7 +68,20 @@ function log(msg) {
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2))
+  const rawArgs = process.argv.slice(2)
+
+  // 서브커맨드: log
+  if (rawArgs[0] === 'log') {
+    try {
+      await runLog(rawArgs.slice(1))
+    } catch (error) {
+      process.stderr.write(`[daily-note] log 실패: ${error?.stack ?? error}\n`)
+      process.exitCode = 1
+    }
+    return
+  }
+
+  const args = parseArgs(rawArgs)
   const today = args.date ? parseDateArg(args.date) : new Date()
 
   if (args.dry) {
