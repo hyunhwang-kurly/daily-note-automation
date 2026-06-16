@@ -25,7 +25,7 @@ rm -rf "${DIST}"
 mkdir -p "${MACOS}" "${RES}"
 
 echo "▶ Swift 메뉴바 앱 컴파일"
-swiftc -O "${ROOT}/app/RONMenuBar.swift" -o "${MACOS}/RON" -framework Cocoa
+swiftc -O "${ROOT}/app/RONMenuBar.swift" -o "${MACOS}/RON" -framework Cocoa -framework SwiftUI
 
 echo "▶ Info.plist 작성 (LSUIElement: 메뉴바 전용, Dock 미표시)"
 cat > "${CONTENTS}/Info.plist" <<PLIST_EOF
@@ -41,7 +41,7 @@ cat > "${CONTENTS}/Info.plist" <<PLIST_EOF
   <key>CFBundleShortVersionString</key><string>1.0.0</string>
   <key>CFBundleVersion</key><string>1</string>
   <key>CFBundleIconFile</key><string>RON</string>
-  <key>LSMinimumSystemVersion</key><string>11.0</string>
+  <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
 </dict>
