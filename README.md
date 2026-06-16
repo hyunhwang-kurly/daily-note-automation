@@ -158,6 +158,14 @@ node bin/daily-note.js --no-mail       # 메일 발송 생략 (파일만)
 node bin/daily-note.js --dry           # 실제 쓰기 없이 대상 파일 경로만 출력
 ```
 
+### 설정 마법사 (비개발자용)
+코드/명령어 없이 GUI로 설정합니다. 폴더 선택창·입력창으로 볼트 폴더와 메일(선택)을 받아 `~/Library/Application Support/DailyNote/config.json`에 저장하고, 자동 실행 등록까지 진행합니다.
+```bash
+npm run setup      # 또는 node bin/setup.js
+```
+- 설정 우선순위: **환경변수 > config.json(마법사) > 기본값**
+- 볼트명은 `.obsidian` 폴더를 자동 탐지해 채웁니다. 메일은 **기본 꺼짐**(마법사에서 켠 사람만).
+
 ### 테스트
 ```bash
 node --test        # 또는 npm test
