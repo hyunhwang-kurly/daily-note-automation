@@ -8,7 +8,7 @@ import { execFile } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { chooseFolder, promptText, confirm, notify } from '../src/dialog.js'
 import { findObsidianRoot, vaultNameFromRoot, defaultVaultCandidates } from '../src/paths.js'
-import { buildConfig, saveConfig } from '../src/config-store.js'
+import { buildConfig, saveConfig, parseTime } from '../src/config-store.js'
 
 const PROJECT_DIR = fileURLToPath(new URL('..', import.meta.url))
 
@@ -51,24 +51,36 @@ async function main() {
     email = { enabled: true, to, from: to }
   }
 
-  // 4) 저장
-  const cfg = buildConfig({ vaultRoot, vaultName, email })
+  // 4) 실행 시각 입력 (기본 07:00)
+  let schedule = { hour: 7, minute: 0 }
+  const timeStr = await promptText({
+    message: '매일 자동 실행 시각을 입력하세요 (HH:MM, 24시간)',
+    defaultAnswer: '07:00',
+  })
+  const parsed = parseTime(timeStr)
+  if (parsed) schedule = parsed
+
+  // 5) 저장
+  const cfg = buildConfig({ vaultRoot, vaultName, email, schedule })
   const savedPath = saveConfig(cfg)
 
-  // 5) 자동 실행 등록 (선택)
+  // 6) 자동 실행 등록 (선택)
+  const hhmm = `${String(schedule.hour).padStart(2, '0')}:${String(schedule.minute).padStart(2, '0')}`
   const wantInstall = await confirm({
-    message: '매일 오전 7시에 자동으로 노트를 만들까요?\n(나중에 다시 이 설정을 열어 바꿀 수 있어요)',
+    message: `매일 ${hhmm}에 자동으로 노트를 만들까요?\n(나중에 다시 이 설정을 열어 바꿀 수 있어요)`,
     yes: '등록',
     no: '나중에',
   })
   let installMsg = '자동 실행은 등록하지 않았습니다.'
   if (wantInstall) {
-    // 번들 실행 시 현재 node(process.execPath)와 번들 스크립트를 launchd에 주입
+    // 번들 실행 시 현재 node(process.execPath)와 번들 스크립트 + 시각을 launchd에 주입
     await run('/bin/bash', [path.join(PROJECT_DIR, 'launchd', 'install.sh')], {
       NODE_BIN: process.execPath,
       ENTRY: path.join(PROJECT_DIR, 'bin', 'daily-note.js'),
+      SCHED_HOUR: String(schedule.hour),
+      SCHED_MINUTE: String(schedule.minute),
     })
-    installMsg = '매일 오전 7시 자동 실행을 등록했고, 이번 주 노트를 만들었습니다.'
+    installMsg = `매일 ${hhmm} 자동 실행을 등록했고, 이번 주 노트를 만들었습니다.`
   }
 
   // 6) 완료 안내

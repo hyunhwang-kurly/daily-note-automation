@@ -37,6 +37,15 @@ fi
 
 mkdir -p "$HOME/Library/LaunchAgents"
 
+# 실행 시각: 환경변수(SCHED_HOUR/SCHED_MINUTE) > config.json schedule > 기본 7:00
+CONFIG_JSON="$HOME/Library/Application Support/RON/config.json"
+read_cfg() { # $1=key
+  [[ -f "${CONFIG_JSON}" ]] || return 1
+  node -e "try{const c=require(process.argv[1]);const v=c.schedule&&c.schedule.$1;if(Number.isInteger(v))process.stdout.write(String(v))}catch(e){}" "${CONFIG_JSON}" 2>/dev/null
+}
+HOUR="${SCHED_HOUR:-$(read_cfg hour)}"; HOUR="${HOUR:-7}"
+MINUTE="${SCHED_MINUTE:-$(read_cfg minute)}"; MINUTE="${MINUTE:-0}"
+
 cat > "${PLIST}" <<PLIST_EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -51,8 +60,8 @@ cat > "${PLIST}" <<PLIST_EOF
   </array>
   <key>StartCalendarInterval</key>
   <dict>
-    <key>Hour</key><integer>7</integer>
-    <key>Minute</key><integer>0</integer>
+    <key>Hour</key><integer>${HOUR}</integer>
+    <key>Minute</key><integer>${MINUTE}</integer>
   </dict>
   <key>StandardOutPath</key>
   <string>${LOG}</string>
@@ -69,7 +78,7 @@ launchctl bootout "${DOMAIN}/${LABEL}" 2>/dev/null || true
 launchctl bootstrap "${DOMAIN}" "${PLIST}"
 launchctl enable "${DOMAIN}/${LABEL}"
 
-echo "✅ 등록 완료: 매일 07:00 실행"
+printf '✅ 등록 완료: 매일 %02d:%02d 실행\n' "${HOUR}" "${MINUTE}"
 echo "   node:   ${NODE_BIN}"
 echo "   script: ${ENTRY}"
 echo "   log:    ${LOG}"

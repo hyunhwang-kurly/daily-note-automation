@@ -37,4 +37,9 @@ export const config = Object.freeze({
   obsidian: Object.freeze({
     vaultName: process.env.DAILY_NOTE_OBSIDIAN_VAULT ?? file.obsidian?.vaultName ?? 'xtring',
   }),
+  // launchd 자동 실행 시각 (기본 07:00)
+  schedule: Object.freeze({
+    hour: Number(process.env.DAILY_NOTE_HOUR ?? file.schedule?.hour ?? 7),
+    minute: Number(process.env.DAILY_NOTE_MINUTE ?? file.schedule?.minute ?? 0),
+  }),
 })
