@@ -276,3 +276,16 @@ cp claude/skills/daily-log/SKILL.md ~/.claude/skills/daily-log/SKILL.md
 		- 17:05
 			- 버그 수정 1건, PR #12 생성
 ```
+
+### 세션 종료 자동 트레이스 (SessionEnd 훅)
+세션이 끝날 때 **가벼운 결정론적 트레이스**(프로젝트·브랜치·변경수·최근 커밋)를 자동 기록합니다. Claude를 재호출하지 않아 **무료·무재귀**, git 레포에서 끝난 세션만 기록합니다. (지능형 요약은 `/daily-log` 스킬 담당)
+
+`claude/hooks/session-end-log.js` 를 `~/.claude/settings.json`의 `hooks.SessionEnd` 배열에 추가:
+```json
+{
+  "hooks": [
+    { "type": "command", "command": "node ~/Work/daily-note-automation/claude/hooks/session-end-log.js" }
+  ]
+}
+```
+> 전역 설정 변경이라 `/update-config` 스킬로 추가하거나 직접 편집하세요. 기록 예: `- (auto) daily-note-automation · main · 변경 3개 · 최근: feat: ...`
