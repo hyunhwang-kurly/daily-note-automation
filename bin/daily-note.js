@@ -2,9 +2,12 @@
 // CLI 진입점. launchd가 매일 07:00 실행.
 // 사용: node bin/daily-note.js [--date YYYY-MM-DD] [--dry] [--no-mail]
 
-import { run, appendDailyLog } from '../src/runner.js'
+import { execFile } from 'node:child_process'
+import { run, appendDailyLog, ensureWeekFile } from '../src/runner.js'
 import { config } from '../src/config.js'
 import { sendDailyEmail } from '../src/email.js'
+import { notePath } from '../src/week.js'
+import { obsidianUri } from '../src/obsidian.js'
 
 function readStdin() {
   return new Promise((resolve) => {
@@ -45,6 +48,16 @@ async function runLog(restArgs) {
   )
 }
 
+// `daily-note open` — 오늘 노트를 Obsidian으로 연다 (없으면 생성)
+async function runOpen() {
+  const today = new Date()
+  await ensureWeekFile({ today })
+  const p = notePath(today, config.vaultRoot)
+  const uri = obsidianUri(p.fullPath, config.obsidian.vaultName)
+  execFile('/usr/bin/open', [uri], () => {})
+  process.stdout.write(`[daily-note] 오늘 노트 열기: ${uri}\n`)
+}
+
 function parseArgs(argv) {
   const args = { date: undefined, dry: false, noMail: false }
   for (let i = 0; i < argv.length; i++) {
@@ -76,6 +89,17 @@ async function main() {
       await runLog(rawArgs.slice(1))
     } catch (error) {
       process.stderr.write(`[daily-note] log 실패: ${error?.stack ?? error}\n`)
+      process.exitCode = 1
+    }
+    return
+  }
+
+  // 서브커맨드: open (오늘 노트 Obsidian으로 열기)
+  if (rawArgs[0] === 'open') {
+    try {
+      await runOpen()
+    } catch (error) {
+      process.stderr.write(`[daily-note] open 실패: ${error?.stack ?? error}\n`)
       process.exitCode = 1
     }
     return

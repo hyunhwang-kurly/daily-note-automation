@@ -195,6 +195,15 @@ export async function run({ today = new Date(), vaultRoot = config.vaultRoot, io
   return summary
 }
 
+// 이번 주 파일이 없으면 스켈레톤 생성. 경로 정보 반환.
+export async function ensureWeekFile({ today = new Date(), vaultRoot = config.vaultRoot, io = realIo } = {}) {
+  const cur = notePath(today, vaultRoot)
+  if (!(await io.exists(cur.fullPath))) {
+    await io.write(cur.fullPath, buildWeeklyNote(today))
+  }
+  return cur
+}
+
 /**
  * 오늘 Work 칸 하위 `🤖 Claude Code` 그룹에 작업 로그를 추가.
  * 파일/오늘 섹션이 없으면 생성. 메일/이월은 건드리지 않음.

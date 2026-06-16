@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# RON.app + RON.dmg 빌드 (미서명).
+# RON.app (Swift 메뉴바 앱) + RON.dmg 빌드 (미서명).
 #
 # 사용법:
 #   bash app/build-app.sh                 # 로컬 node 복사(빠름, 같은 arch 배포)
@@ -12,7 +12,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST="${ROOT}/dist"
 APP="${DIST}/RON.app"
-RES="${APP}/Contents/Resources"
+CONTENTS="${APP}/Contents"
+MACOS="${CONTENTS}/MacOS"
+RES="${CONTENTS}/Resources"
 NODE_VER="v22.11.0"
 BUNDLE_ID="com.hyun.ron"
 
@@ -20,8 +22,32 @@ MODE="${1:-local}"
 
 echo "▶ 정리 및 .app 골격 생성"
 rm -rf "${DIST}"
-mkdir -p "${DIST}"
-osacompile -o "${APP}" "${ROOT}/app/launcher.applescript"
+mkdir -p "${MACOS}" "${RES}"
+
+echo "▶ Swift 메뉴바 앱 컴파일"
+swiftc -O "${ROOT}/app/RONMenuBar.swift" -o "${MACOS}/RON" -framework Cocoa
+
+echo "▶ Info.plist 작성 (LSUIElement: 메뉴바 전용, Dock 미표시)"
+cat > "${CONTENTS}/Info.plist" <<PLIST_EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>RON</string>
+  <key>CFBundleDisplayName</key><string>RON</string>
+  <key>CFBundleExecutable</key><string>RON</string>
+  <key>CFBundleIdentifier</key><string>${BUNDLE_ID}</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>1.0.0</string>
+  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleIconFile</key><string>RON</string>
+  <key>LSMinimumSystemVersion</key><string>11.0</string>
+  <key>LSUIElement</key><true/>
+  <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
+PLIST_EOF
+printf 'APPL????' > "${CONTENTS}/PkgInfo"
 
 echo "▶ 프로젝트 파일 번들 (Resources/app)"
 mkdir -p "${RES}/app"
@@ -54,45 +80,30 @@ else
 fi
 chmod +x "${RES}/node/bin/node"
 
-echo "▶ Info.plist 메타데이터 설정"
-PLIST="${APP}/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleName RON" "${PLIST}" 2>/dev/null || true
-/usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string RON" "${PLIST}" 2>/dev/null \
-  || /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName RON" "${PLIST}"
-/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier ${BUNDLE_ID}" "${PLIST}" 2>/dev/null \
-  || /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string ${BUNDLE_ID}" "${PLIST}"
-
 echo "▶ 앱 아이콘 적용"
 ICON_SRC="${ROOT}/app/icon.png"
 if [[ -f "${ICON_SRC}" ]]; then
-  # swift 가 있으면 macOS 규격(둥근 사각형+투명 여백+그림자)으로 shaping 후 사용
+  # swift 로 macOS 규격(둥근 사각형+투명 여백+그림자) shaping
   SHAPED="${ICON_SRC}"
-  if command -v swift >/dev/null 2>&1; then
+  if swift "${ROOT}/app/make-icon.swift" "${ICON_SRC}" "${DIST}/icon-shaped.png" >/dev/null 2>&1; then
     SHAPED="${DIST}/icon-shaped.png"
-    if swift "${ROOT}/app/make-icon.swift" "${ICON_SRC}" "${SHAPED}" >/dev/null 2>&1; then
-      echo "  macOS 규격 shaping 적용 (둥근 사각형+투명 여백)"
-    else
-      SHAPED="${ICON_SRC}"
-      echo "  shaping 실패 → 원본 사용"
-    fi
+    echo "  macOS 규격 shaping 적용 (둥근 사각형+투명 여백)"
   fi
   ICONSET="${DIST}/AppIcon.iconset"
   mkdir -p "${ICONSET}"
-  # 표준 아이콘 세트 생성 (16~512 + @2x)
   for size in 16 32 128 256 512; do
     sips -z "${size}" "${size}" "${SHAPED}" --out "${ICONSET}/icon_${size}x${size}.png" >/dev/null
     d2=$((size * 2))
     sips -z "${d2}" "${d2}" "${SHAPED}" --out "${ICONSET}/icon_${size}x${size}@2x.png" >/dev/null
   done
-  # osacompile이 만든 applet.icns 를 교체 (Info.plist의 CFBundleIconFile=applet 그대로 사용)
-  iconutil -c icns "${ICONSET}" -o "${RES}/applet.icns"
+  iconutil -c icns "${ICONSET}" -o "${RES}/RON.icns"
   rm -rf "${ICONSET}" "${DIST}/icon-shaped.png"
-  echo "  적용됨: app/icon.png → applet.icns"
+  echo "  적용됨: app/icon.png → RON.icns"
 else
-  echo "  app/icon.png 없음 → 기본 아이콘 사용 (1024x1024 PNG를 app/icon.png 로 두면 자동 적용)"
+  echo "  app/icon.png 없음 → 아이콘 생략"
 fi
 
-echo "▶ ad-hoc 코드서명 (Gatekeeper 경고 완화, 무인증서)"
+echo "▶ ad-hoc 코드서명"
 codesign --force --deep --sign - "${APP}" 2>/dev/null || echo "  (codesign 생략)"
 
 echo "▶ DMG 생성"
@@ -103,5 +114,5 @@ echo "✅ 빌드 완료"
 echo "   app: ${APP}"
 echo "   dmg: ${DIST}/RON.dmg"
 echo ""
-echo "배포 안내: 받은 사람은 .dmg 열고 RON.app 을 Applications로 끌어다 놓은 뒤,"
-echo "첫 실행만 '우클릭 → 열기 → 열기'로 Gatekeeper 경고를 1회 허용하면 됩니다."
+echo "배포 안내: .dmg 열고 RON.app 을 응용 프로그램으로 드래그 → 첫 실행만 '우클릭 → 열기'."
+echo "메뉴바에 아이콘이 뜨고, 로그인 자동 실행은 claude/install.sh 또는 설정에서 등록합니다."
