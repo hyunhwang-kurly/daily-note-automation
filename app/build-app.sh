@@ -38,7 +38,7 @@ cat > "${CONTENTS}/Info.plist" <<PLIST_EOF
   <key>CFBundleExecutable</key><string>RON</string>
   <key>CFBundleIdentifier</key><string>${BUNDLE_ID}</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.0.0</string>
+  <key>CFBundleShortVersionString</key><string>1.1.0</string>
   <key>CFBundleVersion</key><string>1</string>
   <key>CFBundleIconFile</key><string>RON</string>
   <key>LSMinimumSystemVersion</key><string>12.0</string>

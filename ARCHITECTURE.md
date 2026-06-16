@@ -220,7 +220,9 @@ cd ~/Work/daily-note-automation && node bin/daily-note.js
 
 ## 8. 설정
 
-비개발자는 **메뉴바 ⚡ → 설정 열기**에서 항목별로 골라 바로 변경할 수 있습니다(노트 폴더·볼트명·Personal 루틴·실행 시각·메일). 설정이 없으면 첫 실행 마법사가, 있으면 항목 선택 편집 메뉴(`choose from list`)가 뜹니다. 변경값은 `~/Library/Application Support/RON/config.json`에 저장되고, 실행 시각 변경 시 launchd가 자동 재등록됩니다.
+비개발자는 **메뉴바 ⚡ → 설정**에서 **글래스모피즘 네이티브 폼**으로 모든 설정을 한 번에 변경합니다(노트 폴더+찾아보기·볼트명·Personal 루틴·실행 시각·메일 on/off+주소·로그인 자동 실행). 폼은 SwiftUI로 구현하고 `NSVisualEffectView`(`.popover` material, behind-window 블러) 배경 + `.ultraThinMaterial` 카드로 유리 느낌을 냅니다. 메뉴바 앱은 `.accessory`(Dock 미표시)이며 설정 창을 띄울 때만 `.regular`로 전환해 포그라운드로 가져옵니다. **완료** 시 `~/Library/Application Support/RON/config.json`에 저장하고 launchd 일일 작업을 재등록(+로그인 토글 반영)합니다. 첫 실행(설정 없음) 시 자동으로 이 창이 뜹니다.
+
+> CLI(`npm run setup`)에는 osascript 기반 마법사/`choose from list` 편집 메뉴도 있습니다(개발용 폴백).
 
 개발자는 환경변수 또는 `config.json`으로 조정합니다.
 
@@ -327,7 +329,7 @@ bash claude/install.sh uninstall     # 스킬/훅 제거
 
 ### 언어 / 런타임
 - **Node.js (ESM)** — CLI·이월 로직·메일·작업 로그. `"type": "module"`, `.nvmrc=22`, `engines >=18`
-- **Swift 6 / AppKit (Cocoa)** — 메뉴바 앱(`NSApplication`, `NSStatusItem`, `NSMenu`, `NSImage` SF Symbols, `LSUIElement`)
+- **Swift 6 / AppKit + SwiftUI** — 메뉴바 앱(`NSApplication`, `NSStatusItem`, `NSMenu`, `NSImage` SF Symbols, `LSUIElement`) + 설정 폼(SwiftUI `NSHostingView`, `NSVisualEffectView` 글래스, `NSOpenPanel`)
 - **AppleScript** — Mail.app HTML 메일 발송(`html content`, `sender`)
 - **Bash** — 설치/빌드 스크립트 (`set -euo pipefail`)
 
