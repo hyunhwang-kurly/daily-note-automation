@@ -10,8 +10,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationDidFinishLaunching(_ notification: Notification) {
     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     if let button = statusItem.button {
-      if let img = NSImage(systemSymbolName: "calendar.badge.clock", accessibilityDescription: "RON") {
-        img.isTemplate = true
+      // 메뉴바 아이콘 = 번개 (SF Symbol). 다른 모양은 symbolName 만 바꾸면 됨.
+      let symbolName = "bolt.fill"
+      if let img = NSImage(systemSymbolName: symbolName, accessibilityDescription: "RON") {
+        img.isTemplate = true // 라이트/다크 메뉴바에 자동 적응
         button.image = img
       } else {
         button.title = "RON"
