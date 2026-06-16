@@ -63,7 +63,11 @@ async function main() {
   })
   let installMsg = '자동 실행은 등록하지 않았습니다.'
   if (wantInstall) {
-    await run('/bin/bash', [path.join(PROJECT_DIR, 'launchd', 'install.sh')])
+    // 번들 실행 시 현재 node(process.execPath)와 번들 스크립트를 launchd에 주입
+    await run('/bin/bash', [path.join(PROJECT_DIR, 'launchd', 'install.sh')], {
+      NODE_BIN: process.execPath,
+      ENTRY: path.join(PROJECT_DIR, 'bin', 'daily-note.js'),
+    })
     installMsg = '매일 오전 7시 자동 실행을 등록했고, 이번 주 노트를 만들었습니다.'
   }
 

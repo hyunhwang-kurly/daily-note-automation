@@ -18,8 +18,9 @@ PLIST="$HOME/Library/LaunchAgents/${LABEL}.plist"
 LOG="$HOME/Library/Logs/daily-note.log"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENTRY="${SCRIPT_DIR}/bin/daily-note.js"
-NODE_BIN="$(command -v node || true)"
+# .app 번들에서 호출될 때 번들 node/스크립트 경로를 주입할 수 있게 오버라이드 허용
+ENTRY="${ENTRY:-${SCRIPT_DIR}/bin/daily-note.js}"
+NODE_BIN="${NODE_BIN:-$(command -v node || true)}"
 DOMAIN="gui/$(id -u)"
 
 if [[ "${1:-}" == "uninstall" ]]; then

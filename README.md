@@ -2,6 +2,8 @@
 
 Obsidian 주간 데일리 노트를 **매일 07:00**에 자동으로 생성하고, 어제 끝내지 못한 할일을 오늘 칸으로 이월(carry-over)하는 도구입니다. 매일 아침 직접 복사·붙여넣기 하던 작업을 대체합니다.
 
+> **비개발자라면?** 코드/터미널 없이 **`DailyNote.app`(.dmg)** 으로 설치하세요 → [아래 "비개발자용 앱" 참고](#9-비개발자용-앱-appdmg).
+
 ---
 
 ## 1. 요구사항 (확정)
@@ -217,3 +219,28 @@ DAILY_NOTE_VAULT=/tmp/vault-test node bin/daily-note.js --date 2026-06-16 --no-m
 # 다른 주소로 발송 테스트
 DAILY_NOTE_EMAIL_TO=other@example.com node bin/daily-note.js
 ```
+
+---
+
+## 9. 비개발자용 앱 (.app/.dmg)
+
+코드·명령어를 전혀 모르는 사람도 **더블클릭**으로 쓸 수 있게 패키징합니다. Node 런타임이 앱에 포함되어 별도 설치가 필요 없습니다.
+
+### 사용자 입장 (받은 사람)
+1. `DailyNote.dmg` 를 열고 **`DailyNote.app` 을 `응용 프로그램`으로 드래그**
+2. 첫 실행만 **우클릭 → 열기 → 열기** (미서명 앱 Gatekeeper 경고 1회 허용)
+3. 뜨는 설정 마법사에서 **노트 폴더 선택** → (선택) 메일 주소 입력 → **자동 실행 등록**
+4. 끝. 매일 오전 7시에 노트가 자동 생성됩니다. 설정 변경은 앱을 다시 실행.
+
+### 빌드하는 입장 (배포자)
+```bash
+bash app/build-app.sh              # 로컬 node 복사(현재 arch용, 빠름)
+bash app/build-app.sh --download   # nodejs.org에서 arch에 맞는 node 내려받아 번들
+# 산출물: dist/DailyNote.app, dist/DailyNote.dmg
+```
+
+### 구성/제약
+- **미서명 배포**: 무료. 첫 실행 `우클릭 → 열기` 필요. (Apple Developer 인증서가 있으면 `codesign`+공증으로 경고 제거 가능)
+- **arch**: 로컬 복사 빌드는 빌드한 맥의 arch 전용(arm64/x64). 폭넓게 배포하려면 `--download` 로 arch별 빌드.
+- **메일은 선택**: 마법사에서 켠 사람만 활성. Mail.app이 설정·온라인이어야 발송됩니다.
+- launchd 작업은 **앱 번들 내부의 node/스크립트**를 가리키므로, 설치 후 앱을 옮기거나 삭제하면 마법사를 다시 실행하세요.
