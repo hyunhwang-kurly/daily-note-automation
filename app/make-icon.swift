@@ -34,26 +34,28 @@ else { fail("컨텍스트 생성 실패") }
 ctx.clear(CGRect(x: 0, y: 0, width: size, height: size))
 ctx.interpolationQuality = .high
 
-let path = CGPath(roundedRect: body, cornerWidth: radius, cornerHeight: radius, transform: nil)
-
-// 1) 부드러운 그림자 (본체 모양으로 흰 채움 → 그림자 캐스팅, 이후 이미지가 덮음)
-ctx.saveGState()
-ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.012), blur: size * 0.022,
-              color: CGColor(red: 0, green: 0, blue: 0, alpha: 0.20))
-ctx.addPath(path)
-ctx.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
-ctx.fillPath()
-ctx.restoreGState()
-
-// 2) 둥근 본체로 클립 후 원본을 aspect-fill 로 그림
-ctx.saveGState()
-ctx.addPath(path)
-ctx.clip()
+// 1) 본체 이미지 생성: 둥근 사각형으로 클립 + 원본 aspect-fill (투명 바깥, 흰색 없음)
+let bw = Int(body.width.rounded()), bh = Int(body.height.rounded())
+guard let bctx = CGContext(data: nil, width: bw, height: bh, bitsPerComponent: 8, bytesPerRow: 0,
+                           space: cs, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+else { fail("본체 컨텍스트 실패") }
+bctx.clear(CGRect(x: 0, y: 0, width: bw, height: bh))
+bctx.interpolationQuality = .high
+let bpath = CGPath(roundedRect: CGRect(x: 0, y: 0, width: CGFloat(bw), height: CGFloat(bh)),
+                   cornerWidth: radius, cornerHeight: radius, transform: nil)
+bctx.addPath(bpath)
+bctx.clip()
 let iw = CGFloat(img.width), ih = CGFloat(img.height)
-let scale = max(body.width / iw, body.height / ih)
+let scale = max(CGFloat(bw) / iw, CGFloat(bh) / ih)
 let dw = iw * scale, dh = ih * scale
-let drawRect = CGRect(x: body.midX - dw / 2, y: body.midY - dh / 2, width: dw, height: dh)
-ctx.draw(img, in: drawRect)
+bctx.draw(img, in: CGRect(x: (CGFloat(bw) - dw) / 2, y: (CGFloat(bh) - dh) / 2, width: dw, height: dh))
+guard let bodyImage = bctx.makeImage() else { fail("본체 이미지 실패") }
+
+// 2) 최종 캔버스: 본체 이미지의 알파에서 직접 부드러운 그림자 캐스팅 (흰색 안 깔음)
+ctx.saveGState()
+ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.012), blur: size * 0.024,
+              color: CGColor(red: 0, green: 0, blue: 0, alpha: 0.22))
+ctx.draw(bodyImage, in: body)
 ctx.restoreGState()
 
 guard let out = ctx.makeImage() else { fail("이미지 생성 실패") }
