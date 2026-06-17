@@ -1,6 +1,6 @@
 {
   "name": "daily-note-automation",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "RON (Routine On) — Obsidian 주간 데일리 노트 자동 생성/이월 + 메뉴바 앱",
   "type": "module",
   "keywords": [
