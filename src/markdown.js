@@ -66,15 +66,21 @@ export function workSubsectionLines(bodyLines) {
   return { startIndex: idx, endIndex: i, lines }
 }
 
-// "- [ ] ..." 미완료 항목의 텍스트만 추출 (체크된 [x]는 제외)
-export function unfinishedWorkItems(bodyLines) {
+// "- [ ] ..." 미완료 항목을 들여쓰기와 함께 추출 (체크된 [x]는 제외)
+// → [{ indent: '\t\t', text: '...' }] (원본 탭 보존)
+export function unfinishedWorkEntries(bodyLines) {
   const { lines } = workSubsectionLines(bodyLines)
-  const items = []
+  const entries = []
   for (const l of lines) {
     const m = UNCHECKED_RE.exec(l)
-    if (m) items.push(m[2].trim())
+    if (m) entries.push({ indent: m[1], text: m[2].trim() })
   }
-  return items
+  return entries
+}
+
+// "- [ ] ..." 미완료 항목의 텍스트만 추출 (체크된 [x]는 제외)
+export function unfinishedWorkItems(bodyLines) {
+  return unfinishedWorkEntries(bodyLines).map((e) => e.text)
 }
 
 // 이월 텍스트의 base(원문)와 누적 일수 분리
@@ -86,13 +92,14 @@ export function parseCarry(text) {
   return { days: 1, base: text.trim() }
 }
 
-// 이월 한 번 더 → 일수 증가시킨 표시 텍스트
-export function bumpCarry(text) {
-  const { days, base } = parseCarry(text)
-  return `↪ (${days + 1}d) ${base}`
+// 이월 마킹(↪ (Nd))을 떼어낸 순수 원문 텍스트.
+// 신규 이월은 마커 없이 이 텍스트 그대로 복사하고, 기존 노트에 남아있던
+// 레거시 ↪ (Nd) 접두사는 제거한다.
+export function carryBase(text) {
+  return parseCarry(text).base
 }
 
 // 두 항목이 같은 일인지 (이월 마킹 무시한 base 비교)
 export function sameBase(a, b) {
-  return parseCarry(a).base === parseCarry(b).base
+  return carryBase(a) === carryBase(b)
 }

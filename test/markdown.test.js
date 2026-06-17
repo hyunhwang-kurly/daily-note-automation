@@ -4,9 +4,11 @@ import {
   parseSections,
   serializeSections,
   unfinishedWorkItems,
+  unfinishedWorkEntries,
   workSubsectionLines,
   parseCarry,
-  bumpCarry,
+  carryBase,
+  sameBase,
   daySections,
 } from '../src/markdown.js'
 
@@ -66,7 +68,31 @@ test('parseCarry: 일수/base 분리', () => {
   assert.deepEqual(parseCarry('↪ 표시만'), { days: 1, base: '표시만' })
 })
 
-test('bumpCarry: 최초 이월 → (2d), 누적 → +1', () => {
-  assert.equal(bumpCarry('정기 배포'), '↪ (2d) 정기 배포')
-  assert.equal(bumpCarry('↪ (2d) 밀린일'), '↪ (3d) 밀린일')
+test('carryBase: ↪ (Nd) 마커만 떼고 원문(이모지 포함) 보존', () => {
+  assert.equal(carryBase('정기 배포'), '정기 배포')
+  assert.equal(carryBase('🚀 배포 요청서'), '🚀 배포 요청서') // 본문 이모지는 유지
+  assert.equal(carryBase('↪ (3d) 배포 요청서'), '배포 요청서') // 레거시 마커는 제거
+})
+
+test('sameBase: ↪ 마커 무시하고 같은 일로 인식', () => {
+  assert.ok(sameBase('배포 요청서', '↪ (3d) 배포 요청서'))
+})
+
+test('unfinishedWorkEntries: 원본 들여쓰기(탭) 보존, [x] 제외', () => {
+  const sample = `
+## 월(6/15)
+- Personal
+\t- [ ] 운동
+- Read
+- Work
+\t- [ ] 부모 작업
+\t\t- [ ] 자식 작업
+\t- [x] 끝난일
+`
+  const { sections } = parseSections(sample)
+  const mon = sections.find((s) => s.title.startsWith('월'))
+  assert.deepEqual(unfinishedWorkEntries(mon.bodyLines), [
+    { indent: '\t', text: '부모 작업' },
+    { indent: '\t\t', text: '자식 작업' },
+  ])
 })

@@ -16,9 +16,9 @@ import {
   serializeSections,
   daySections,
   unfinishedWorkItems,
+  unfinishedWorkEntries,
   workSubsectionLines,
-  bumpCarry,
-  parseCarry,
+  carryBase,
 } from './markdown.js'
 import { buildWeeklyNote } from './template.js'
 import { insertWorkLog } from './worklog.js'
@@ -45,9 +45,9 @@ function markerFor(date) {
   return `<!-- carried:${dateKey(date)} -->`
 }
 
-// 한 요일 섹션 본문에서 Work 하위 미완료 항목 추출
+// 한 요일 섹션 본문에서 Work 하위 미완료 항목 추출 (들여쓰기 보존)
 function unfinishedOf(section) {
-  return section ? unfinishedWorkItems(section.bodyLines) : []
+  return section ? unfinishedWorkEntries(section.bodyLines) : []
 }
 
 // 이름(월/화/...)으로 요일 섹션 찾기
@@ -113,11 +113,6 @@ function sectionToText(section) {
   return `${section.raw}\n${body}`
 }
 
-// 오늘 칸 Work에 현재 들어있는 이월(↪) 항목 텍스트들
-function carriedItemsIn(section) {
-  return unfinishedWorkItems(section.bodyLines).filter((t) => t.startsWith('↪'))
-}
-
 /**
  * 메인 진입. 결과 요약 객체 반환.
  * @param {{today?: Date, vaultRoot?: string, io?: object}} options
@@ -149,7 +144,11 @@ export async function run({ today = new Date(), vaultRoot = config.vaultRoot, io
     const fromPrev = collectFromPrev(prevSections)
     // 월요일 칸으로 이월할 항목(지난주 미완료 Work)
     const mondaySource = findCarrySource(weekDates(today)[0], [], prevSections)
-    const mondayCarry = mondaySource.map(bumpCarry)
+    // 원본 탭(들여쓰기) 보존 + 마커 없이 순수 복붙으로 월요일 칸에 이월
+    const mondayCarry = mondaySource.map((e) => ({
+      indent: e.indent,
+      text: carryBase(e.text),
+    }))
     const content = buildWeeklyNote(today, {
       goalsBodyLines: fromPrev.goalsBodyLines,
       notesBodyLines: fromPrev.notesBodyLines,
@@ -176,22 +175,23 @@ export async function run({ today = new Date(), vaultRoot = config.vaultRoot, io
     const source = findCarrySource(today, parsed.sections, prevSections)
     // 오늘 Work에 이미 있는 base와 중복 제거
     const existingBases = new Set(
-      unfinishedWorkItems(todaySection.bodyLines).map((t) => parseCarry(t).base),
+      unfinishedWorkItems(todaySection.bodyLines).map((t) => carryBase(t)),
     )
-    const carriedLines = source
-      .filter((t) => !existingBases.has(parseCarry(t).base))
-      .map((t) => `${config.indent}- [ ] ${bumpCarry(t)}`)
+    // 원본 탭(들여쓰기) 보존 + 마커(↪ (Nd)) 없이 원문 그대로 복붙
+    const carriedEntries = source.filter((e) => !existingBases.has(carryBase(e.text)))
+    const carriedLines = carriedEntries.map((e) => `${e.indent}- [ ] ${carryBase(e.text)}`)
 
     todaySection.bodyLines = injectCarry(todaySection.bodyLines, carriedLines, marker)
     await io.write(cur.fullPath, serializeSections(parsed.preamble, parsed.sections))
     summary.carried = carriedLines.length
+    // 이번 실행에서 옮긴 항목 (메일 요약용). 마커가 없어 사후 식별 불가하므로 여기서 채운다.
+    summary.carriedItems = carriedEntries.map((e) => carryBase(e.text))
   } else {
     summary.skipped = true
   }
 
-  // 3) 메일 요약용: 오늘 칸 텍스트 + 현재 이월 항목 (skip 여부와 무관하게 항상 채움)
+  // 3) 메일 요약용: 오늘 칸 텍스트 (skip 여부와 무관하게 항상 채움)
   summary.todaySectionText = sectionToText(todaySection)
-  summary.carriedItems = carriedItemsIn(todaySection)
   return summary
 }
 

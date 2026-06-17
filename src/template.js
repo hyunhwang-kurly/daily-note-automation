@@ -10,7 +10,8 @@ function defaultGoalsBody() {
   return ["- 주요업무", `${TAB}- `, "- 일상", `${TAB}- `, ""];
 }
 
-// 요일 한 칸 생성. carryItems: ["↪ (2d) ..."] 형태의 텍스트들
+// 요일 한 칸 생성.
+// carryItems: { indent, text } 형태(원본 탭 보존, 마커 없는 원문) 또는 문자열
 export function buildDayBlock(date, { carryItems = [], marker = null } = {}) {
   const lines = [`## ${dayName(date)}(${monthDay(date)})`, "- Personal"];
   for (const routine of config.personalRoutines) {
@@ -18,7 +19,9 @@ export function buildDayBlock(date, { carryItems = [], marker = null } = {}) {
   }
   lines.push("- Read", "- Work");
   for (const item of carryItems) {
-    lines.push(`${TAB}- [ ] ${item}`);
+    const { indent, text } =
+      typeof item === "string" ? { indent: TAB, text: item } : item;
+    lines.push(`${indent || TAB}- [ ] ${text}`);
   }
   if (marker) lines.push(marker);
   lines.push("");
