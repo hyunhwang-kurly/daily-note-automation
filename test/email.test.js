@@ -39,6 +39,15 @@ test('buildEmail: HTML에 헤더/이월/버튼(obsidian 링크) 포함', () => {
   assert.ok(html.includes('<s>독서</s>'))
 })
 
+test('buildEmail: webBase 주면 버튼이 https 리다이렉트 링크 (Gmail 클릭 가능)', () => {
+  const webBase = 'https://hyunhwang-kurly.github.io/daily-note-automation/open.html'
+  const { html, text } = buildEmail(baseSummary, { ...opts, webBase })
+  // 버튼 href가 https 리다이렉트로 바뀌고, vault/file 쿼리 포함
+  assert.ok(html.includes(`href="${webBase}?vault=xtring&amp;file=`))
+  assert.ok(!html.includes('href="obsidian://')) // 더 이상 직접 딥링크 버튼 아님
+  assert.ok(text.includes(`${webBase}?vault=xtring&file=`))
+})
+
 test('buildEmail: 이월 0건이면 "오늘 이월 없음"', () => {
   const { subject, text, html } = buildEmail({ ...baseSummary, carried: 0, carriedItems: [] }, opts)
   assert.ok(subject.endsWith('이월 0건'))

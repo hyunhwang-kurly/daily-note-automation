@@ -2,7 +2,7 @@
 
 import { execFile } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { obsidianUri } from './obsidian.js'
+import { obsidianUri, obsidianWebUri } from './obsidian.js'
 
 const SCRIPT_PATH = fileURLToPath(new URL('./send-mail.applescript', import.meta.url))
 const DIVIDER = '──────────────────────────────'
@@ -58,11 +58,15 @@ function renderTodayHtml(text) {
 }
 
 // summary → { subject, text, html } (순수 함수)
-export function buildEmail(summary, { vaultName } = {}) {
+export function buildEmail(summary, { vaultName, webBase } = {}) {
+  const vault = vaultName ?? 'xtring'
   const n = summary.carriedItems.length
   const status = statusLabel(summary)
   const subject = `[데일리노트] ${summary.weekLabel} ${summary.dayLabel} · 이월 ${n}건`
-  const uri = obsidianUri(summary.path, vaultName ?? 'xtring')
+  // obsidian:// 딥링크는 Gmail 등 웹메일에서 클릭이 막히므로,
+  // 버튼은 https 리다이렉트(webBase)를 거치게 한다. webBase 없으면 직접 딥링크로 폴백.
+  const deepLink = obsidianUri(summary.path, vault)
+  const uri = webBase ? obsidianWebUri(summary.path, vault, webBase) : deepLink
 
   // ── 텍스트 본문 (폴백) ──
   const carryText = n === 0 ? '  오늘 이월 없음' : summary.carriedItems.map((t) => `  - ${t}`).join('\n')
@@ -136,8 +140,8 @@ export function sendViaMailApp({ to, from, subject, text, html, scriptPath = SCR
 }
 
 // summary 기반으로 메일 발송 (고수준 진입점)
-export async function sendDailyEmail(summary, { to, from, vaultName }) {
-  const { subject, text, html } = buildEmail(summary, { vaultName })
+export async function sendDailyEmail(summary, { to, from, vaultName, webBase }) {
+  const { subject, text, html } = buildEmail(summary, { vaultName, webBase })
   await sendViaMailApp({ to, from, subject, text, html })
   return subject
 }

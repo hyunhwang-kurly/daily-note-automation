@@ -127,6 +127,7 @@ async function main() {
           to: config.email.to,
           from: config.email.from,
           vaultName: config.obsidian.vaultName,
+          webBase: config.obsidian.webBase,
         })
         log(`메일 발송 완료 → ${config.email.to} | ${subject}`)
       } catch (mailError) {

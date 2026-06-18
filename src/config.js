@@ -36,6 +36,12 @@ export const config = Object.freeze({
   // Obsidian 딥링크용 볼트명 (obsidian://open?vault=...)
   obsidian: Object.freeze({
     vaultName: process.env.DAILY_NOTE_OBSIDIAN_VAULT ?? file.obsidian?.vaultName ?? 'xtring',
+    // 메일 버튼용 https 리다이렉트 페이지 (Gmail이 obsidian:// 직접 링크를 막아서 필요).
+    // GitHub Pages에 올린 docs/open.html.
+    webBase:
+      process.env.DAILY_NOTE_OBSIDIAN_WEBBASE ??
+      file.obsidian?.webBase ??
+      'https://hyunhwang-kurly.github.io/daily-note-automation/open.html',
   }),
   // launchd 자동 실행 시각 (기본 07:00)
   schedule: Object.freeze({
