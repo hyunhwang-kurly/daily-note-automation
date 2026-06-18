@@ -9,7 +9,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![node](https://img.shields.io/badge/node-%E2%89%A518-43853d.svg)
 ![platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
-![tests](https://img.shields.io/badge/tests-41%20passing-brightgreen.svg)
+![tests](https://img.shields.io/badge/tests-48%20passing-brightgreen.svg)
 ![deps](https://img.shields.io/badge/dependencies-zero-success.svg)
 
 ### [⬇️ RON.dmg 다운로드 (최신 릴리스)](https://github.com/hyunhwang-kurly/daily-note-automation/releases/latest/download/RON.dmg)
@@ -64,7 +64,7 @@
 | 📅 | **주간 노트 자동 생성** | ISO 주차 규칙으로 `YYYY/YYYY.MM/YYYY년 M월 N주차.md`를 폴더까지 자동 생성 |
 | ↪ | **미완료 할일 이월** | 어제의 미완료 `- [ ]`를 오늘 Work 칸으로. 마커 없이 **원문 그대로 복붙**(중첩 탭/들여쓰기 보존) |
 | ⏰ | **매일 자동 실행** | launchd로 지정 시각(기본 07:00) 실행. 잠자기였으면 깨어난 직후 보정 |
-| 📧 | **요약 메일 (선택)** | 오늘 칸 + 이월 요약을 HTML 메일로. `데일리 노트 확인하기` 버튼(Obsidian 딥링크) |
+| 📧 | **요약 메일 (선택)** | 오늘 칸 + 이월 요약을 HTML 메일로. `데일리 노트 확인하기` 버튼은 **Gmail에서도 클릭**되는 https 링크(→ Obsidian 자동 실행) |
 | 🤖 | **Claude Code 작업 로그** | 세션 작업을 요약해 노트에 기록하는 스킬 + 세션 종료 자동 트레이스 훅 |
 | ⚡ | **메뉴바 앱** | 상단 상태표시줄 상주(Dock 미표시). 오늘 노트 열기 · 설정 · 종료. 로그인 자동 실행 |
 | 🪟 | **글래스 설정 창** | 메뉴바 → 설정 → **글래스모피즘 폼**(`라벨: 입력칸`)에서 모든 설정을 한 번에 변경 (코드·터미널 불필요) |
@@ -83,7 +83,7 @@
 git clone https://github.com/hyunhwang-kurly/daily-note-automation.git
 cd daily-note-automation
 nvm use                       # Node 22 (.nvmrc)
-node --test                   # 테스트 41개
+node --test                   # 테스트 48개
 
 node bin/daily-note.js --dry  # 오늘 대상 파일 경로 확인
 node bin/daily-note.js        # 오늘 노트 생성/이월 (+메일)
@@ -119,7 +119,10 @@ bash launchd/install-login.sh      # 메뉴바 앱 로그인 자동 실행
 | 메일 수신자 | (마법사 입력) | `DAILY_NOTE_EMAIL_TO` |
 | 메일 on/off | `on` | `DAILY_NOTE_EMAIL=off` |
 | Obsidian 볼트명 | `.obsidian` 자동 탐지 | `DAILY_NOTE_OBSIDIAN_VAULT` |
+| 메일 버튼 리다이렉트 | GitHub Pages `open.html` | `DAILY_NOTE_OBSIDIAN_WEBBASE` |
 | Personal 루틴 | `운동`, `독서` | (config) |
+
+> **메일 버튼이 Gmail에서 클릭되는 이유** — Gmail 등 웹메일은 보안상 `obsidian://` 같은 커스텀 스킴 링크를 막습니다. 그래서 `데일리 노트 확인하기` 버튼은 `https://…github.io/daily-note-automation/open.html?vault=…&file=…` 로 연결되고, 이 페이지가 `obsidian://`로 다시 넘겨 노트를 엽니다(브라우저에서 실행되므로 정상 동작). 이 리다이렉트 페이지는 **볼트/파일을 쿼리로 받는 범용 페이지**라 모든 사용자가 공유해 쓸 수 있습니다. 자체 호스팅을 쓰려면 `DAILY_NOTE_OBSIDIAN_WEBBASE`로 주소만 바꾸면 됩니다.
 
 ## 🧩 주차 계산 규칙 (ISO week-of-month)
 
@@ -171,10 +174,11 @@ bash app/build-app.sh --download   # arch별 node 내려받아 번들
 daily-note-automation/
 ├── bin/            # CLI 진입점 (daily-note.js, setup.js)
 ├── src/            # 코어 로직 (week·markdown·template·runner·email·worklog·config…)
-├── test/           # node:test (41 케이스)
+├── test/           # node:test (48 케이스)
 ├── launchd/        # 자동 실행 등록 스크립트 (install.sh, install-login.sh)
 ├── app/            # macOS 앱 빌드 (RONMenuBar.swift, make-icon.swift, build-app.sh, icon.png)
 ├── claude/         # Claude Code 스킬/훅 + install.sh
+├── docs/           # 메일 버튼용 https→obsidian:// 리다이렉트 (GitHub Pages)
 └── assets/         # 로고 등
 ```
 
